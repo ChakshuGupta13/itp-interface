@@ -175,9 +175,19 @@ unsafe def processRequest (b64Input : String) (chkptState : Option CheckpointedP
       -- to the theorem to come). Drop "unexpected end of input" errors in
       -- that mode so the Python wrapper's `fail_on_error=True` does not raise
       -- on what is, for chkpt_tactics, an expected condition.
+      --
+      -- Narrowed (per pre-merge review): only suppress when the error position
+      -- is at or beyond the input's end-of-content line. This still drops the
+      -- trailing-attribute EOF (which fires at the last line of input) but
+      -- preserves any "unexpected end of input" errors that the parser reports
+      -- at an earlier line — which are real malformations, not artefacts of
+      -- intentional truncation.
       if is_checkpoint_request then
+        let chunk_line_num := chkpointParseResult.lineNum.getD 0
+        let input_end_line := prev_line_num + chunk_line_num
         let filtered_errors := result.errors.filter (fun err =>
-          !("unexpected end of input".isPrefixOf err.message))
+          !("unexpected end of input".isPrefixOf err.message
+            && err.position.line + 1 >= input_end_line))
         result := { result with errors := filtered_errors }
     else
       -- Unsupported request type

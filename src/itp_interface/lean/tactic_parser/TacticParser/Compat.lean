@@ -52,6 +52,13 @@ def elabCompatPreV427 : CommandElab := fun stx => do
 --
 -- On v4.27 these are NOT elaborated; the real core definitions are used.
 -- On v4.15–4.24 these introduce the v4.27 spellings as thin wrappers.
+--
+-- WARNING: `command*` in the `compat_pre_v427` syntax declaration is
+-- greedy-to-EOF. Every command following the `compat_pre_v427` token below
+-- is captured and conditionally elaborated. Do NOT add helper functions or
+-- `#eval` blocks after the shim list — they will be silently skipped on
+-- v4.27. Anything that must run on every toolchain should be placed ABOVE
+-- this comment (i.e. before the `compat_pre_v427` use site).
 -- ---------------------------------------------------------------------------
 
 compat_pre_v427
